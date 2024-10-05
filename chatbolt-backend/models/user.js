@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 
+// define user schema
 const userSchema = new mongoose.Schema({
   sessionId: {
     type: String,
@@ -7,24 +8,21 @@ const userSchema = new mongoose.Schema({
     unique: true
   },
   answers: [{
-    index: {
-      type: Number
-    },
-    text: {
-      type: String
-    }
+    type: String
   }],
   sessionStart: {
     type: Date,
     default: Date.now
   },
   sessionEnd: {
-    type: Date
+    type: Date,
+    default: null
   }
 });
 
+// remove MongoDB object ID from requests
 userSchema.set("toJSON", {
-  transform: (document, returnedObject) => {
+  transform: (_document, returnedObject) => {
     returnedObject.id = returnedObject._id.toString()
     delete returnedObject._id
     delete returnedObject.__v
