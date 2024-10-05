@@ -15,12 +15,15 @@ const App = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     const newAnswer = e.target[0].value
-    const updatedAnswers = [...answers, newAnswer]
-    setAnswers(updatedAnswers)
-    // put updated answers with user's sessionID to the database
-    await userService.updateUserData(updatedAnswers, user.sessionId)
-    // clear text input
-    setAnswerBox('')
+    // do not accept empty string
+    if (newAnswer.length > 0){
+      const updatedAnswers = [...answers, newAnswer]
+      setAnswers(updatedAnswers)
+      // put updated answers with user's sessionID to the database
+      await userService.updateUserData(updatedAnswers, user.sessionId)
+      // clear text input
+      setAnswerBox('')
+    }
   }
 
   useEffect(() => {
