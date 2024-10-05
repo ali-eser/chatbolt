@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const cors = require('cors');
 const mongoose = require('mongoose');
 const config = require('./utils/config');
 const MongoStore = require('connect-mongo');
@@ -7,6 +8,27 @@ const MongoStore = require('connect-mongo');
 const User = require('./models/user');
 
 const app = express();
+
+app.use(express.json());
+app.use(cors({
+  credentials: true,
+  origin: true
+}));
+
+app.use(session({
+  store: MongoStore.create({
+    mongoUrl: config.MONGODB_URI
+  }),
+  secret: config.SECRET,
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    maxAge: 86400000,
+    httpOnly: false,
+    secure: false,
+    sameSite: 'lax'
+  }
+}));
 
 mongoose.set('strictQuery', false);
 
@@ -18,22 +40,13 @@ mongoose.connect(config.MONGODB_URI)
     console.log(`error: `, err.message);
   })
 
-app.use(express.json());
-app.use(session({
-  name: 'chatbolt-session',
-  secret: config.SECRET,
-  resave: false,
-  store: MongoStore.create({
-    client: mongoose.connection.getClient()
-  })
-}));
-
 app.get('/api/users', async (req, res) => {
+  console.log(req.sessionID);
   if (req.session) {
     const user = await User.findOne({ sessionId: req.sessionID } );
     return res.json(user);
   } else {
-    res.status(404).json({ error: 'No session' });
+    res.status(404).send('No user');
   }
 });
 
