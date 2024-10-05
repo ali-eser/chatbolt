@@ -1,5 +1,5 @@
 import axios from 'axios'
-axios.defaults.baseURL = 'http://localhost:3001'
+axios.defaults.baseURL = `http://localhost:${import.meta.env.VITE_PORT}`
 
 // allow browser to hand back cookies with every request
 axios.defaults.withCredentials = true
