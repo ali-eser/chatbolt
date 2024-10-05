@@ -1,3 +1,5 @@
+
+// question array
 export const questionsArray = [
   'What is your favorite breed of cat, and why?',
   'How do you think cats communicate with their owners?',
