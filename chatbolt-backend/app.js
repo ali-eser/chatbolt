@@ -15,6 +15,7 @@ app.use(cors({
   origin: true
 }));
 
+// set sessions for 24 hours
 app.use(session({
   store: MongoStore.create({
     mongoUrl: config.MONGODB_URI
@@ -25,6 +26,7 @@ app.use(session({
   cookie: {
     maxAge: 86400000,
     httpOnly: false,
+    // secure: false because of dev env
     secure: false,
     sameSite: 'lax'
   }
@@ -32,6 +34,7 @@ app.use(session({
 
 mongoose.set('strictQuery', false);
 
+// connect to MongoDB server
 mongoose.connect(config.MONGODB_URI)
   .then(() => {
     console.log('connected to MongoDB');
@@ -40,9 +43,10 @@ mongoose.connect(config.MONGODB_URI)
     console.log(`error: `, err.message);
   })
 
+// endpoint for getting the current user via their sessionID
 app.get('/api/users', async (req, res) => {
-  console.log(req.sessionID);
   if (req.session) {
+    console.log(req.sessionID);
     const user = await User.findOne({ sessionId: req.sessionID } );
     return res.json(user);
   } else {
@@ -50,10 +54,9 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// endpoint for creating users if they do not have existing entries
 app.post('/api/users/create', async (req, res) => {
-  req.session.questionIndex = 0;
-
-  // Date.now() explicitly assigned to a constant to eliminate any 
+  // Date.now() is explicitly assigned to a constant to eliminate any 
   // possible difference in microseconds between the session and user model
   const currentDate = Date.now();
   req.session.startedAt = currentDate;
@@ -69,15 +72,25 @@ app.post('/api/users/create', async (req, res) => {
   }
 });
 
+// endpoint for updating user answers
 app.put('/api/users/:id', async (req, res) => {
-  try{
-    const updatedAnswers = await User.findOneAndUpdate(
-      { sessionId: req.params.id },
-      { $set: { answers: req.body.answers } },
-      { new: true }
-    );
-    // req.session.questionIndex = TODO
-    return res.status(200).json(updatedAnswers)
+  try {
+    if (req.body.length === 10) {
+      // if user has answered every question, set sessionEnd to Date.now()
+      const updatedAnswers = await User.findOneAndUpdate(
+        { sessionId: req.params.id },
+        { $set: { answers: req.body, sessionEnd: Date.now() } },
+        { new: true }
+      );
+      return res.status(200).json(updatedAnswers);
+    } else {
+      const updatedAnswers = await User.findOneAndUpdate(
+        { sessionId: req.params.id },
+        { $set: { answers: req.body} },
+        { new: true }
+      );
+      return res.status(200).json(updatedAnswers);
+    }
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }
